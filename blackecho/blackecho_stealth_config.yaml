@@ -1,0 +1,17 @@
+# BlackEcho Stealth Configuration
+
+# Spoofed protocols
+spoofed_protocols:
+  - "http"
+  - "dns"
+  - "https"
+  - "websocket"
+
+# Sandbox evasion
+sandbox_evasion: true
+
+# Heartbeat settings
+heartbeat_interval: 60  # seconds
+
+# Encryption settings
+encryption_key: null  # Generate a new key if null

