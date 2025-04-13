@@ -136,6 +136,31 @@ class ImplantStatus:
             
         return self.cumulative_delay / (heartbeat_count - 1)
     
+    def update_from_blacklink_status(self, status_data: Dict[str, Any]):
+        """Update implant status from BlackLink heartbeat data
+        
+        Args:
+            status_data: Status data from BlackLink heartbeat
+        """
+        # Record a heartbeat
+        self.record_heartbeat()
+        
+        # Store additional data if needed
+        if "system_info" in status_data:
+            self.system_info = status_data["system_info"]
+            
+        if "status" in status_data:
+            # Store link status info
+            self.link_status = status_data["status"]
+            
+            # If there's a queue size, we might want to track it
+            if "exfil_queue_size" in status_data["status"]:
+                self.exfil_queue_size = status_data["status"]["exfil_queue_size"]
+                
+        # Store timestamp for convenience
+        if "timestamp" in status_data:
+            self.last_heartbeat_time = status_data["timestamp"]
+    
 
 class HeartbeatMonitor:
     """Monitors heartbeats from implants and triggers alerts"""

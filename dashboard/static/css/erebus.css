@@ -1,0 +1,196 @@
+/**
+ * ErebusC2 Dashboard Custom Styles
+ */
+
+/* Dashboard Cards */
+.stat-card {
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card .icon {
+    font-size: 2rem;
+}
+
+/* Terminal styling */
+.terminal {
+    font-family: 'Courier New', monospace;
+    background-color: #0f0f0f;
+    color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.terminal p {
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+
+/* Table Styling */
+.table-dark {
+    --bs-table-bg: #1a1a1a;
+    --bs-table-striped-bg: #242424;
+    --bs-table-hover-bg: #2c2c2c;
+}
+
+/* Custom Badges */
+.badge-implant-online {
+    background-color: #198754;
+}
+
+.badge-implant-offline {
+    background-color: #dc3545;
+}
+
+.badge-implant-sleeping {
+    background-color: #fd7e14;
+}
+
+/* Status Indicators */
+.status-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-dot-online {
+    background-color: #198754;
+    box-shadow: 0 0 5px #198754;
+}
+
+.status-dot-offline {
+    background-color: #dc3545;
+    box-shadow: 0 0 5px #dc3545;
+}
+
+.status-dot-waiting {
+    background-color: #fd7e14;
+    box-shadow: 0 0 5px #fd7e14;
+}
+
+/* Command Interface */
+.command-input {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    border: 1px solid #3a3a3a;
+}
+
+.command-output {
+    white-space: pre-wrap;
+}
+
+/* Attack traffic chart */
+#trafficChart {
+    background-color: #1a1a1a;
+    border-radius: 5px;
+}
+
+/* Form controls in dark theme */
+.form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Custom file upload */
+.custom-file-upload {
+    border: 1px solid #3a3a3a;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    border-radius: 5px;
+}
+
+/* Toast notifications */
+.toast {
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+}
+
+.toast-header {
+    background-color: #333;
+    color: #f0f0f0;
+}
+
+/* Network visualization */
+#networkVisualization {
+    background-color: #121212;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+/* Card border variations */
+.border-left-primary {
+    border-left: 4px solid #4e73df;
+}
+
+.border-left-success {
+    border-left: 4px solid #1cc88a;
+}
+
+.border-left-info {
+    border-left: 4px solid #36b9cc;
+}
+
+.border-left-warning {
+    border-left: 4px solid #f6c23e;
+}
+
+.border-left-danger {
+    border-left: 4px solid #e74a3b;
+}
+
+/* Dashboard specific styles */
+.dashboard-overview .card {
+    transition: all 0.3s ease;
+}
+
+.dashboard-overview .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Main navbar customization */
+.navbar {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(0, 0, 0, 0.15);
+}
+
+.navbar-brand img {
+    filter: brightness(0) invert(1);
+}
+
+/* Sidebar customization */
+.sidebar {
+    width: 250px;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    background-color: #1e1e1e;
+}
+
+.sidebar-sticky {
+    position: relative;
+    top: 0;
+    height: calc(100vh - 48px);
+    padding-top: .5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Footer customization */
+footer {
+    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+}

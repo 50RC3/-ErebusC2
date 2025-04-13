@@ -1,0 +1,54 @@
+# BlackOutbreak Configuration
+
+# Attack settings
+attack:
+  max_concurrent_attacks: 10
+  default_duration: 300  # seconds
+  default_intensity: 5   # 1-10
+  default_stealth: 7     # 1-10
+  default_vectors:
+    - udp
+    - syn
+    - http
+
+# Vector-specific settings
+vectors:
+  udp:
+    enabled: true
+    ports:
+      - 80
+      - 443
+      - 53
+      - 8080
+  
+  syn:
+    enabled: true
+    max_connections: 1000
+  
+  http:
+    enabled: true
+    paths:
+      - "/"
+      - "/index.html"
+      - "/api/"
+      - "/login"
+    
+  slowloris:
+    enabled: true
+    max_connections: 500
+    socket_timeout: 5
+
+# Stealth settings
+stealth:
+  spoof_addresses: true
+  randomize_ports: true
+  mimic_browser: true
+  session_rotation: true
+  delay_multiplier: 1.0  # Adjust timing for evasion
+
+# Logging settings
+logging:
+  level: "INFO"
+  file: "blackoutbreak.log"
+  max_size: 10485760  # 10MB
+  backups: 3

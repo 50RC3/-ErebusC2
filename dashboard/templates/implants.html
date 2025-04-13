@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Implants - ErebusC2 Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Implants</h1>
+        <div>
+            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <button class="btn btn-outline-primary ms-2" id="refreshImplantsBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+    
+    <!-- Implant list -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold">Active Implants</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-cog"></i> Actions
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><button class="dropdown-item" id="exportImplantsBtn"><i class="fas fa-download me-2"></i>Export List</button></li>
+                    <li><button class="dropdown-item" id="killAllImplantsBtn"><i class="fas fa-skull me-2"></i>Kill All</button></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="implantList">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>IP Address</th>
+                            <th>OS</th>
+                            <th>Last Seen</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if implants %}
+                            {% for implant in implants %}
+                            <tr class="align-middle">
+                                <td>
+                                    <span class="status-dot status-dot-{% if implant.status == 'active' %}online{% else %}offline{% endif %}"></span>
+                                </td>
+                                <td>{{ implant.hostname or implant.name or 'Unnamed' }}</td>
+                                <td>{{ implant.type or 'Unknown' }}</td>
+                                <td>{{ implant.ip or implant.ip_address or 'Unknown' }}</td>
+                                <td>{{ implant.os or 'Unknown' }}</td>
+                                <td>{{ implant.last_seen or 'Unknown' }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/implant/{{ implant.id }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Connect">
+                                            <i class="fas fa-terminal"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger implant-action" data-action="kill" data-implant-id="{{ implant.id }}" data-bs-toggle="tooltip" title="Kill Implant">
+                                            <i class="fas fa-skull"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning implant-action" data-action="restart" data-implant-id="{{ implant.id }}" data-bs-toggle="tooltip" title="Restart Implant">
+                                            <i class="fas fa-redo-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center">No implants registered</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark-subtle">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filter Implants</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <label for="filterOs" class="form-label">Operating System</label>
+                            <select class="form-select" id="filterOs">
+                                <option value="">All</option>
+                                <option value="Windows">Windows</option>
+                                <option value="Linux">Linux</option>
+                                <option value="macOS">macOS</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterStatus" class="form-label">Status</label>
+                            <select class="form-select" id="filterStatus">
+                                <option value="">All</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterType" class="form-label">Implant Type</label>
+                            <select class="form-select" id="filterType">
+                                <option value="">All</option>
+                                <option value="BlackEcho">BlackEcho</option>
+                                <option value="BlackOutbreak">BlackOutbreak</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="applyFilterBtn">Apply Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize implant list refresh
+        refreshImplantList();
+        
+        // Setup refresh button
+        $('#refreshImplantsBtn').on('click', function() {
+            refreshImplantList();
+        });
+        
+        // Handle kill all implants button
+        $('#killAllImplantsBtn').on('click', function() {
+            if (confirm('Are you sure you want to kill ALL implants? This action cannot be undone.')) {
+                // Get all implant IDs
+                const implantIds = [];
+                $('#implantList tbody tr').each(function() {
+                    const actionBtn = $(this).find('.implant-action[data-action="kill"]');
+                    if (actionBtn.length) {
+                        implantIds.push(actionBtn.data('implant-id'));
+                    }
+                });
+                
+                // Kill each implant
+                if (implantIds.length) {
+                    let completed = 0;
+                    let failed = 0;
+                    
+                    implantIds.forEach(function(id) {
+                        $.ajax({
+                            url: `/api/dashboard/implants/${id}/command`,
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                type: 'kill',
+                                params: {}
+                            }),
+                            success: function() {
+                                completed++;
+                                if (completed + failed === implantIds.length) {
+                                    ErebusNotifications.success('Kill Commands Sent', `Successfully sent kill command to ${completed} implants`);
+                                    if (failed > 0) {
+                                        ErebusNotifications.error('Kill Commands Failed', `Failed to send kill command to ${failed} implants`);
+                                    }
+                                    setTimeout(refreshImplantList, 2000);
+                                }
+                            },
+                            error: function() {
+                                failed++;
+                                if (completed + failed === implantIds.length) {
+                                    ErebusNotifications.success('Kill Commands Sent', `Successfully sent kill command to ${completed} implants`);
+                                    if (failed > 0) {
+                                        ErebusNotifications.error('Kill Commands Failed', `Failed to send kill command to ${failed} implants`);
+                                    }
+                                    setTimeout(refreshImplantList, 2000);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+        });
+        
+        // Handle filter application
+        $('#applyFilterBtn').on('click', function() {
+            const os = $('#filterOs').val();
+            const status = $('#filterStatus').val();
+            const type = $('#filterType').val();
+            
+            // Apply filters to table
+            $('#implantList tbody tr').each(function() {
+                let show = true;
+                
+                if (os && !$(this).find('td:eq(4)').text().includes(os)) {
+                    show = false;
+                }
+                
+                if (status) {
+                    const isActive = $(this).find('.status-dot-online').length > 0;
+                    if ((status === 'active' && !isActive) || (status === 'inactive' && isActive)) {
+                        show = false;
+                    }
+                }
+                
+                if (type && !$(this).find('td:eq(2)').text().includes(type)) {
+                    show = false;
+                }
+                
+                $(this).toggle(show);
+            });
+            
+            // Close the modal
+            $('#filterModal').modal('hide');
+        });
+        
+        // Handle export
+        $('#exportImplantsBtn').on('click', function() {
+            // Create CSV content
+            let csv = 'ID,Name,Type,IP,OS,Status,Last Seen\n';
+            
+            $('#implantList tbody tr').each(function() {
+                if ($(this).is(':visible')) {
+                    const status = $(this).find('.status-dot-online').length > 0 ? 'Active' : 'Inactive';
+                    const implantId = $(this).find('.implant-action').data('implant-id');
+                    const name = $(this).find('td:eq(1)').text();
+                    const type = $(this).find('td:eq(2)').text();
+                    const ip = $(this).find('td:eq(3)').text();
+                    const os = $(this).find('td:eq(4)').text();
+                    const lastSeen = $(this).find('td:eq(5)').text();
+                    
+                    csv += `"${implantId}","${name}","${type}","${ip}","${os}","${status}","${lastSeen}"\n`;
+                }
+            });
+            
+            // Download the CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `implants-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+        
+        // Set up auto-refresh
+        setInterval(refreshImplantList, 60000); // Refresh every minute
+    });
+</script>
+{% endblock %}

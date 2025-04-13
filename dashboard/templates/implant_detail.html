@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Implant Detail - {{ implant.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/implants">Implants</a></li>
+            <li class="breadcrumb-item active">{{ implant.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row mb-4">
+        <div class="col-md-7">
+            <h1>
+                <span class="badge {% if implant.online %}bg-success{% else %}bg-danger{% endif %} me-2">
+                    <i class="fas fa-circle"></i>
+                </span>
+                {{ implant.name }}
+            </h1>
+        </div>
+        <div class="col-md-5 text-end">
+            <div class="btn-group">
+                <button class="btn btn-outline-danger" id="killImplantBtn">
+                    <i class="fas fa-skull"></i> Kill
+                </button>
+                <button class="btn btn-outline-warning" id="restartImplantBtn">
+                    <i class="fas fa-redo-alt"></i> Restart
+                </button>
+                <button class="btn btn-outline-info" id="implantSettingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Basic Implant Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-dark-subtle">
+                <div class="card-header">
+                    <h5 class="mb-0">Implant Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th>ID</th>
+                                <td>{{ implant.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Type</th>
+                                <td>{{ implant.type }}</td>
+                            </tr>
+                            <tr>
+                                <th>OS</th>
+                                <td>{{ implant.os }}</td>
+                            </tr>
+                            <tr>
+                                <th>IP Address</th>
+                                <td>{{ implant.ip_address }}</td>
+                            </tr>
+                            <tr>
+                                <th>Hostname</th>
+                                <td>{{ implant.hostname }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Seen</th>
+                                <td>{{ implant.last_seen }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card bg-dark-subtle">
+                <div class="card-header">
+                    <h5 class="mb-0">Communication Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Beacon Interval:</span>
+                        <strong>{{ implant.beacon_interval }} seconds</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Last Beacon:</span>
+                        <strong>{{ implant.last_beacon_time }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Encrypted:</span>
+                        <strong>{{ "Yes" if implant.encrypted else "No" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Protocol:</span>
+                        <strong>{{ implant.protocol }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Proxy:</span>
+                        <strong>{{ implant.proxy if implant.proxy else "None" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Security Level:</span>
+                        <div class="progress" style="width: 50%; height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ implant.security_level * 10 }}%;" 
+                                 aria-valuenow="{{ implant.security_level }}" aria-valuemin="0" aria-valuemax="10">
+                                {{ implant.security_level }}/10
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Command Interface -->
+    <div class="card bg-dark-subtle mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Command Interface</h5>
+        </div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="commandInput" placeholder="Enter command...">
+                <button class="btn btn-primary" id="sendCommandBtn">Send</button>
+            </div>
+            <div class="terminal bg-dark text-light p-3" style="height: 300px; overflow-y: auto; font-family: 'Courier New', monospace;">
+                <div id="commandOutput">
+                    <!-- Output will be inserted here -->
+                    <p class="text-success">Connected to implant {{ implant.id }} ({{ implant.name }}).</p>
+                    <p class="text-success">Type 'help' for available commands.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Implant-specific controls -->
+    {% block implant_specific %}
+    <!-- This block will be replaced by implant-type-specific controls -->
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Simple terminal handling
+    $(document).ready(function() {
+        const commandHistory = [];
+        let historyPosition = -1;
+        
+        $('#sendCommandBtn').on('click', function() {
+            const command = $('#commandInput').val().trim();
+            if (command) {
+                sendCommand(command);
+                commandHistory.push(command);
+                historyPosition = commandHistory.length;
+                $('#commandInput').val('');
+            }
+        });
+        
+        $('#commandInput').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                $('#sendCommandBtn').click();
+            } else if (e.key === 'ArrowUp') {
+                if (historyPosition > 0) {
+                    historyPosition--;
+                    $('#commandInput').val(commandHistory[historyPosition]);
+                }
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                if (historyPosition < commandHistory.length - 1) {
+                    historyPosition++;
+                    $('#commandInput').val(commandHistory[historyPosition]);
+                } else {
+                    historyPosition = commandHistory.length;
+                    $('#commandInput').val('');
+                }
+                e.preventDefault();
+            }
+        });
+        
+        function sendCommand(command) {
+            // Display command in terminal
+            $('#commandOutput').append(`<p><span class="text-info">$</span> ${escapeHtml(command)}</p>`);
+            
+            // Scroll to bottom
+            const terminal = document.querySelector('.terminal');
+            terminal.scrollTop = terminal.scrollHeight;
+            
+            // Send command to server
+            $.ajax({
+                url: '/api/send_command',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    implant_id: "{{ implant.id }}",
+                    command: command
+                }),
+                success: function(response) {
+                    // Wait for command result
+                    setTimeout(() => {
+                        getCommandResult(response.command_id);
+                    }, 1000);
+                },
+                error: function(xhr) {
+                    $('#commandOutput').append(`<p class="text-danger">Error sending command: ${xhr.responseJSON?.error || 'Unknown error'}</p>`);
+                    const terminal = document.querySelector('.terminal');
+                    terminal.scrollTop = terminal.scrollHeight;
+                }
+            });
+        }
+        
+        function getCommandResult(commandId) {
+            $.ajax({
+                url: `/api/command_result/${commandId}`,
+                type: 'GET',
+                success: function(response) {
+                    if (response.result) {
+                        // Display result in terminal
+                        const formattedOutput = response.result.replace(/\n/g, '<br>');
+                        $('#commandOutput').append(`<p class="text-light">${formattedOutput}</p>`);
+                        
+                        // Scroll to bottom
+                        const terminal = document.querySelector('.terminal');
+                        terminal.scrollTop = terminal.scrollHeight;
+                    } else {
+                        // Command still running
+                        setTimeout(() => {
+                            getCommandResult(commandId);
+                        }, 2000);
+                    }
+                },
+                error: function(xhr) {
+                    $('#commandOutput').append(`<p class="text-danger">Error getting command result: ${xhr.responseJSON?.error || 'Unknown error'}</p>`);
+                    const terminal = document.querySelector('.terminal');
+                    terminal.scrollTop = terminal.scrollHeight;
+                }
+            });
+        }
+        
+        // Helper function to escape HTML special characters
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Handle implant action buttons
+        $('#killImplantBtn').on('click', function() {
+            if (confirm('Are you sure you want to kill this implant? This action cannot be undone.')) {
+                sendCommand('kill');
+            }
+        });
+        
+        $('#restartImplantBtn').on('click', function() {
+            if (confirm('Are you sure you want to restart this implant?')) {
+                sendCommand('restart');
+            }
+        });
+        
+        $('#implantSettingsBtn').on('click', function() {
+            // Open settings modal/page
+            // This would be implemented as needed
+            alert('Settings functionality not yet implemented');
+        });
+    });
+</script>
+{% endblock %}

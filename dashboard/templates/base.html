@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ErebusC2 Dashboard{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/erebus.css">
+    
+    <!-- Dark theme by default -->
+    <style>
+        :root {
+            --bs-body-color: #e2e2e2;
+            --bs-body-bg: #121212;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #e2e2e2;
+        }
+        
+        .navbar {
+            background-color: #1e1e1e !important;
+        }
+        
+        .card {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+        
+        .card-header {
+            background-color: #2a2a2a;
+            border-color: #333;
+        }
+        
+        .table {
+            color: #e2e2e2;
+        }
+        
+        .bg-dark-subtle {
+            background-color: #1e1e1e !important;
+        }
+        
+        .text-dark-subtle {
+            color: #aaa !important;
+        }
+        
+        .nav-link {
+            color: #e2e2e2;
+        }
+        
+        .nav-link:hover {
+            color: #fff;
+        }
+        
+        .nav-link.active {
+            color: #fff !important;
+            background-color: #333 !important;
+        }
+        
+        .form-control, .form-select {
+            background-color: #2a2a2a;
+            border-color: #444;
+            color: #e2e2e2;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #2a2a2a;
+            color: #e2e2e2;
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/img/erebus-logo.png" height="30" class="me-2" alt="ErebusC2 Logo">
+                <span>ErebusC2</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+                            <i class="fas fa-chart-line me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/implants' in request.path %}active{% endif %}" href="/implants">
+                            <i class="fas fa-laptop-code me-1"></i> Implants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/listeners' in request.path %}active{% endif %}" href="/listeners">
+                            <i class="fas fa-satellite-dish me-1"></i> Listeners
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/operations' in request.path %}active{% endif %}" href="/operations">
+                            <i class="fas fa-flag me-1"></i> Operations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/payloads' in request.path %}active{% endif %}" href="/payloads">
+                            <i class="fas fa-file-code me-1"></i> Payloads
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/settings' in request.path %}active{% endif %}" href="/settings">
+                            <i class="fas fa-cog me-1"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-1"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="/logs"><i class="fas fa-list me-1"></i> Logs</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-3 mt-4">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">ErebusC2 Command & Control Framework</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="badge bg-danger">Server: Online</span>
+                    <span class="badge bg-success ms-2">Version: 1.2.0</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/static/js/erebus.js"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

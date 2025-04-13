@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ErebusC2 Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/erebus.css">
+    
+    <!-- Dark theme by default -->
+    <style>
+        :root {
+            --bs-body-color: #e2e2e2;
+            --bs-body-bg: #121212;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #e2e2e2;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+        
+        .card-header {
+            background-color: #2a2a2a;
+            border-color: #333;
+        }
+        
+        .form-control {
+            background-color: #2a2a2a;
+            border-color: #444;
+            color: #e2e2e2;
+        }
+        
+        .form-control:focus {
+            background-color: #2a2a2a;
+            color: #e2e2e2;
+        }
+        
+        .login-card {
+            min-width: 350px;
+            max-width: 450px;
+        }
+        
+        .login-brand {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .login-brand img {
+            height: 80px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="login-brand">
+                    <img src="/static/img/erebus-logo.png" alt="ErebusC2 Logo" onerror="this.src='/static/img/default-logo.png'; this.onerror=null;">
+                    <h1>ErebusC2</h1>
+                    <p class="text-muted">Advanced Command & Control</p>
+                </div>
+                
+                <div class="card shadow-lg login-card">
+                    <div class="card-header py-3">
+                        <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Authentication Required</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="loginError" class="alert alert-danger d-none"></div>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form id="loginForm" method="POST">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger">
+                                    <span class="spinner-border spinner-border-sm d-none" id="loginSpinner"></span>
+                                    Login
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer text-center text-muted">
+                        <small>Default credentials: admin / changeme</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/static/js/erebus.js"></script>
+</body>
+</html>

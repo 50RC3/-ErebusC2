@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+
+{% block title %}ErebusC2 Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <h1 class="mb-4">Operations Dashboard</h1>
+    
+    <!-- Status Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Active Implants</div>
+                            <div class="h5 mb-0 font-weight-bold" id="activeImplantCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-laptop-code icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Active Listeners</div>
+                            <div class="h5 mb-0 font-weight-bold" id="activeListenerCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-satellite-dish icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">P2P Connections</div>
+                            <div class="h5 mb-0 font-weight-bold" id="p2pConnectionCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-network-wired icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Pending Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold" id="pendingTaskCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Content -->
+    <div class="row">
+        <!-- Network Visualization -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">Network Visualization</h6>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-secondary" id="zoomInBtn">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="zoomOutBtn">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="resetViewBtn">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="networkVisualization" style="height: 400px; border: 1px solid #444;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold">Recent Activity</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="recentActivityList">
+                        <!-- Activity items will be added here -->
+                        <div class="list-group-item bg-dark-subtle">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Loading activity...</h6>
+                                <small>just now</small>
+                            </div>
+                            <p class="mb-1">Retrieving recent events from server...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Implants and Commands -->
+    <div class="row">
+        <!-- Recent Implants -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">Recent Implants</h6>
+                    <a href="/implants" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Name</th>
+                                    <th>OS</th>
+                                    <th>Last Seen</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentImplantsList">
+                                <!-- Recent implants will be added here -->
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading implants...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Commands -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">Recent Commands</h6>
+                    <a href="/commands" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Implant</th>
+                                    <th>Command</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentCommandsList">
+                                <!-- Recent commands will be added here -->
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading commands...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
+<script>
+    // Network visualization
+    let network = null;
+    
+    function initNetworkVisualization() {
+        $.ajax({
+            url: '/api/dashboard/network/visualize',
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+            },
+            success: function(data) {
+                createNetworkVisualization(data);
+            },
+            error: function(xhr) {
+                console.error("Failed to load network data:", xhr.responseJSON || xhr.statusText);
+                $('#networkVisualization').html('<div class="alert alert-danger">Failed to load network data</div>');
+            }
+        });
+    }
+    
+    function createNetworkVisualization(data) {
+        const container = document.getElementById('networkVisualization');
+        
+        // Define node colors from configuration
+        const nodeColors = {
+            'implant': '#4CAF50',
+            'relay': '#2196F3',
+            'server': '#F44336'
+        };
+        
+        const edgeColors = {
+            'primary': '#FFFFFF',
+            'p2p': '#888888',
+            'relay': '#0000FF'
+        };
+        
+        // Create dataset
+        const nodes = new vis.DataSet(data.nodes.map(node => ({
+            id: node.id,
+            label: node.label,
+            color: nodeColors[node.type] || '#AAAAAA',
+            shape: node.type === 'server' ? 'diamond' : (node.type === 'relay' ? 'triangle' : 'dot'),
+            size: node.type === 'server' ? 30 : (node.type === 'relay' ? 20 : 15),
+            font: {
+                color: '#FFFFFF'
+            }
+        })));
+        
+        const edges = new vis.DataSet(data.edges.map(edge => ({
+            from: edge.from,
+            to: edge.to,
+            arrows: 'to',
+            color: edgeColors[edge.type] || '#AAAAAA',
+            width: edge.type === 'primary' ? 3 : (edge.type === 'relay' ? 2 : 1),
+            dashes: edge.type === 'p2p'
+        })));
+        
+        // Create network
+        const options = {
+            physics: {
+                stabilization: true,
+                barnesHut: {
+                    gravitationalConstant: -10000,
+                    centralGravity: 0.3,
+                    springLength: 150,
+                    springConstant: 0.04
+                }
+            },
+            interaction: {
+                navigationButtons: true,
+                keyboard: true,
+                hover: true
+            }
+        };
+        
+        network = new vis.Network(container, { nodes, edges }, options);
+        
+        // Event listeners
+        network.on('click', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                if (nodeId !== 'c2-server') {
+                    window.location.href = `/implant/${nodeId}`;
+                }
+            }
+        });
+        
+        // Zoom controls
+        $('#zoomInBtn').on('click', function() {
+            const scale = network.getScale() * 1.2;
+            network.moveTo({ scale: scale });
+        });
+        
+        $('#zoomOutBtn').on('click', function() {
+            const scale = network.getScale() * 0.8;
+            network.moveTo({ scale: scale });
+        });
+        
+        $('#resetViewBtn').on('click', function() {
+            network.fit();
+        });
+    }
+    
+    // Load data for dashboard
+    function loadDashboardData() {
+        // Load status info
+        $.ajax({
+            url: '/api/dashboard/status',
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+            },
+            success: function(data) {
+                $('#activeImplantCount').text(data.implant_count);
+                
+                // Calculate active listeners (if available)
+                let activeListeners = 0;
+                if (data.relays) {
+                    activeListeners = data.relays.length;
+                }
+                $('#activeListenerCount').text(activeListeners);
+                
+                // Calculate P2P connections
+                let p2pConnections = 0;
+                if (data.network && data.network.connections) {
+                    p2pConnections = data.network.connections.filter(c => c.type === 'p2p').length;
+                }
+                $('#p2pConnectionCount').text(p2pConnections);
+                
+                // Load recent implants
+                loadRecentImplants(data.implants.slice(0, 5));
+            },
+            error: function(xhr) {
+                console.error("Failed to load dashboard status:", xhr.responseJSON || xhr.statusText);
+            }
+        });
+        
+        // Load recent commands
+        $.ajax({
+            url: '/api/dashboard/commands?limit=5',
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+            },
+            success: function(data) {
+                $('#pendingTaskCount').text(data.commands.filter(c => c.status === 'pending').length);
+                loadRecentCommands(data.commands);
+            },
+            error: function(xhr) {
+                console.error("Failed to load recent commands:", xhr.responseJSON || xhr.statusText);
+            }
+        });
+        
+        // Load recent activity
+        loadRecentActivity();
+    }
+    
+    function loadRecentImplants(implants) {
+        const tableBody = $('#recentImplantsList');
+        tableBody.empty();
+        
+        if (implants.length === 0) {
+            tableBody.append('<tr><td colspan="5" class="text-center">No implants available</td></tr>');
+            return;
+        }
+        
+        implants.forEach(function(implant) {
+            const isActive = implant.status === 'active';
+            const statusIcon = isActive ? 
+                '<span class="status-dot status-dot-online"></span>' : 
+                '<span class="status-dot status-dot-offline"></span>';
+            
+            tableBody.append(`
+                <tr>
+                    <td>${statusIcon}</td>
+                    <td>${implant.hostname || 'Unknown'}</td>
+                    <td>${implant.os || 'Unknown'}</td>
+                    <td>${implant.last_seen || 'Unknown'}</td>
+                    <td>
+                        <a href="/implant/${implant.id}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-terminal"></i>
+                        </a>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+    
+    function loadRecentCommands(commands) {
+        const tableBody = $('#recentCommandsList');
+        tableBody.empty();
+        
+        if (commands.length === 0) {
+            tableBody.append('<tr><td colspan="4" class="text-center">No recent commands</td></tr>');
+            return;
+        }
+        
+        commands.forEach(function(command) {
+            const statusClass = command.status === 'completed' ? 'text-success' : 
+                               (command.status === 'failed' || command.status === 'error' ? 'text-danger' : 'text-warning');
+            
+            tableBody.append(`
+                <tr>
+                    <td>${command.implant_id}</td>
+                    <td>${command.type}</td>
+                    <td><span class="${statusClass}">${command.status}</span></td>
+                    <td>${formatTimestamp(command.queued)}</td>
+                </tr>
+            `);
+        });
+    }
+    
+    function loadRecentActivity() {
+        const activityList = $('#recentActivityList');
+        
+        // In a complete implementation, this would be populated with real data from an API endpoint
+        // For now, we'll show placeholder data
+        
+        activityList.empty();
+        
+        const activities = [
+            {
+                title: 'New implant registered',
+                description: 'A new BlackEcho implant has connected from 192.168.1.50',
+                time: '2 minutes ago',
+                icon: 'fa-laptop-code',
+                iconClass: 'text-success'
+            },
+            {
+                title: 'Command executed',
+                description: 'Screenshot command completed successfully on WS-DEV-01',
+                time: '15 minutes ago',
+                icon: 'fa-terminal',
+                iconClass: 'text-info'
+            },
+            {
+                title: 'Listener started',
+                description: 'HTTPS listener started on port 443',
+                time: '30 minutes ago',
+                icon: 'fa-satellite-dish',
+                iconClass: 'text-primary'
+            },
+            {
+                title: 'P2P connection established',
+                description: 'New peer-to-peer connection between WS-DEV-01 and WS-DEV-03',
+                time: '45 minutes ago',
+                icon: 'fa-network-wired',
+                iconClass: 'text-warning'
+            },
+            {
+                title: 'System alert',
+                description: 'High memory usage detected on C2 server',
+                time: '1 hour ago',
+                icon: 'fa-exclamation-triangle',
+                iconClass: 'text-danger'
+            }
+        ];
+        
+        activities.forEach(function(activity) {
+            activityList.append(`
+                <div class="list-group-item bg-dark-subtle">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">
+                            <i class="fas ${activity.icon} ${activity.iconClass} me-2"></i>
+                            ${activity.title}
+                        </h6>
+                        <small>${activity.time}</small>
+                    </div>
+                    <p class="mb-1">${activity.description}</p>
+                </div>
+            `);
+        });
+    }
+    
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return 'Unknown';
+        
+        try {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        } catch (e) {
+            return timestamp;
+        }
+    }
+    
+    // Event socket functions
+    function setupEventSocket() {
+        const socket = io();
+        
+        socket.on('connect', function() {
+            socket.emit('authenticate', {
+                token: localStorage.getItem('auth_token')
+            });
+        });
+        
+        socket.on('authentication_result', function(data) {
+            if (data.status === 'success') {
+                console.log('Socket authenticated');
+            } else {
+                console.error('Socket authentication failed');
+            }
+        });
+        
+        // Listen for real-time events
+        socket.on('implant_registered', function(data) {
+            ErebusNotifications.info('New Implant', `Implant ${data.hostname || data.implant_id} has registered`);
+            refreshDashboard();
+        });
+        
+        socket.on('implant_beacon', function(data) {
+            // Update UI as needed when implants check in
+            refreshDashboard();
+        });
+        
+        socket.on('command_queued', function(data) {
+            ErebusNotifications.info('Command Queued', `Command ${data.type} queued for implant ${data.implant_id}`);
+            refreshDashboard();
+        });
+        
+        socket.on('command_completed', function(data) {
+            ErebusNotifications.success('Command Complete', `Command ${data.command_id} completed successfully`);
+            refreshDashboard();
+        });
+        
+        socket.on('command_failed', function(data) {
+            ErebusNotifications.error('Command Failed', `Command ${data.command_id} failed: ${data.error || 'Unknown error'}`);
+            refreshDashboard();
+        });
+    }
+    
+    function refreshDashboard() {
+        loadDashboardData();
+        initNetworkVisualization();
+    }
+    
+    // Check authentication status
+    function checkAuth() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return false;
+        }
+        return true;
+    }
+    
+    // Initialize page
+    $(document).ready(function() {
+        if (checkAuth()) {
+            loadDashboardData();
+            initNetworkVisualization();
+            setupEventSocket();
+            
+            // Set up auto-refresh
+            setInterval(refreshDashboard, 60000); // Refresh every minute
+        }
+    });
+</script>
+{% endblock %}

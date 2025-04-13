@@ -1,0 +1,38 @@
+{
+  "dashboard": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "debug": false,
+    "secret_key": "change-this-to-a-random-string",
+    "session_timeout": 3600,
+    "base_template": "base.html"
+  },
+  "api": {
+    "token_secret": "changeme",
+    "cors_origins": ["*"]
+  },
+  "admin_username": "admin",
+  "admin_password": "changeme",
+  "server": {
+    "implant_timeout": 300,
+    "command_timeout": 600,
+    "max_queue_size": 1000
+  },
+  "p2p_settings": {
+    "enabled": true,
+    "max_peers": 5,
+    "peer_refresh_interval": 120
+  },
+  "visualization": {
+    "node_colors": {
+      "implant": "#4CAF50",
+      "relay": "#2196F3",
+      "server": "#F44336"
+    },
+    "edge_colors": {
+      "primary": "#000000",
+      "p2p": "#888888",
+      "relay": "#0000FF"
+    }
+  }
+}
